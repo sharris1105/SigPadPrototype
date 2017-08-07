@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
+            var resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.cmdStart = new System.Windows.Forms.Button();
             this.sigPlusNET1 = new Topaz.SigPlusNET();
             this.SuspendLayout();
