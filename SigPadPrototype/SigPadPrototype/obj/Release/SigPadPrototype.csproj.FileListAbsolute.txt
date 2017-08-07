@@ -7,3 +7,4 @@ C:\Users\sharris\Documents\Visual Studio 2015\Projects\SigPadPrototype\SigPadPro
 C:\Users\sharris\Documents\Visual Studio 2015\Projects\SigPadPrototype\SigPadPrototype\SigPadPrototype\obj\Release\SigPadPrototype.csproj.GenerateResource.Cache
 C:\Users\sharris\Documents\Visual Studio 2015\Projects\SigPadPrototype\SigPadPrototype\SigPadPrototype\obj\Release\SigPadPrototype.exe
 C:\Users\sharris\Documents\Visual Studio 2015\Projects\SigPadPrototype\SigPadPrototype\SigPadPrototype\obj\Release\SigPadPrototype.pdb
+C:\Users\sharris\Documents\Visual Studio 2015\Projects\SigPadPrototype\SigPadPrototype\SigPadPrototype\bin\Release\itextsharp.dll
