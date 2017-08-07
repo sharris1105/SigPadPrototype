@@ -1,11 +1,17 @@
 ﻿using System;
+using System.Collections;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.IO.Ports;
+using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
 using Application = System.Windows.Forms.Application;
+using Font = System.Drawing.Font;
+
 
 
 namespace SigPadPrototype
@@ -101,45 +107,150 @@ namespace SigPadPrototype
                sigPlusNET1.SetImageXSize(500);
                sigPlusNET1.SetImageYSize(100);
                var myImg = sigPlusNET1.GetSigImage();
+               myImg.Save(Application.StartupPath + "\\test.bmp", System.Drawing.Imaging.ImageFormat.Bmp);
 
+                    var openFileDialog1 = new OpenFileDialog()
+                {
+                    Filter = @"PDF File|*.pdf",
+                    Title = @"Open PDF File"
+                };
+                openFileDialog1.ShowDialog();
 
-               //Opens save file dialog
-                var saveFileDialog1 =
-                    new SaveFileDialog
+                    PdfRectangle rect = new PdfRectangle(0, 0, 0, 0);
+                    RectangleF rectF = new RectangleF();
+                string path = Application.StartupPath + "\\test.pdf";
+
+                    if (openFileDialog1.FileName != "")
+                {
+                    PdfReader reader = new PdfReader(openFileDialog1.FileName);
+                    PdfStamper stamper = new PdfStamper(reader, new System.IO.FileStream(path, System.IO.FileMode.Create));
+                    PdfContentByte underContent = stamper.GetUnderContent(1);
+
+                    AcroFields form = stamper.AcroFields;
+                    float[] fieldPositions = reader.AcroFields.GetFieldPositions("Digital Signature");
+                    Console.WriteLine("FIELD POSITION : " + fieldPositions);
+                    if (fieldPositions == null || ((ICollection) fieldPositions).Count <= 0) throw new ApplicationException("Error locating field");
+
+                        if (fieldPositions != null)
+                        {
+                            //add rectangle - this is where the signature will be
+                        }
+
+                        try
+                        {
+                        // Add signature image to the document
+
+                        sigPlusNET1.SetJustifyY(20);
+                        sigPlusNET1.SetJustifyX(20);
+                        sigPlusNET1.SetImageFileFormat(0); //0=bmp, 4=jpg, 6=tif
+
+                        int minX, maxX, minY, maxY, aX, aY, ratio, aIndex, bIndex, fixedY;
+
+                        minX = sigPlusNET1.GetPointXValue(0, 1);
+                        maxX = sigPlusNET1.GetPointXValue(0, 1);
+                        minY = sigPlusNET1.GetPointYValue(0, 1);
+                        maxY = sigPlusNET1.GetPointYValue(0, 1);
+
+                        for (aIndex = 0; aIndex < sigPlusNET1.GetNumberOfStrokes(); aIndex++)
+                        {
+                            for (bIndex = 0; bIndex < sigPlusNET1.GetNumPointsForStroke(aIndex); bIndex++)
+                            {
+                                aX = sigPlusNET1.GetPointXValue(aIndex, bIndex);
+                                aY = sigPlusNET1.GetPointYValue(aIndex, bIndex);
+
+                                if (aX < minX)
+                                {
+                                    minX = aX;
+                                }
+
+                                if (aX > maxX)
+                                {
+                                    maxX = aX;
+                                }
+
+                                if (aY < minY)
+                                {
+                                    minY = aY;
+                                }
+
+                                if (aY > maxY)
+                                {
+                                    maxY = aY;
+                                }
+
+                            }
+                        }
+
+                        ratio = ((maxX - minX) / (maxY - minY));
+                        fixedY = 200;
+                        sigPlusNET1.SetImagePenWidth((int) (fixedY * 0.5));
+                        sigPlusNET1.SetJustifyMode(5);
+
+                        sigPlusNET1.SetImageXSize((int) ((ratio * fixedY) * 1.5));
+                        sigPlusNET1.SetImageYSize((int) (fixedY * 1.5));
+                        sigPlusNET1.SetAntiAliasLineScale(0.4f);
+                        sigPlusNET1.SetAntiAliasSpotSize(0.25f);
+
+                        iTextSharp.text.Image image = iTextSharp.text.Image.GetInstance(myImg, System.Drawing.Imaging.ImageFormat.Bmp);
+
+                        image.Transparency = new int[] {255, 255};
+                        image.SetAbsolutePosition(fieldPositions[0],fieldPositions[1]);
+                        image.ScalePercent(60);
+
+                        underContent.AddImage(image);
+
+                        stamper.Close();
+                        reader.Close();
+                    }
+                    catch (DocumentException de)
                     {
-                        Filter = @"Bitmap Image|*.bmp|GIF Image|*.Gif|JPeg Image|*.jpg|PNG Image|*.Png",
-                        Title = @"Save Signature Image"
-                    };
-                saveFileDialog1.ShowDialog();
+                            Console.WriteLine(de.Message);
+                        }
+                    catch (IOException ioe)
+                    {
+                            Console.WriteLine(ioe.Message);
+                        }
 
-               if (saveFileDialog1.FileName != "")
-               {
-                  var fs = (FileStream)saveFileDialog1.OpenFile();
+                    }
+          #region
+                    //     //Opens save file dialog
+                    //     var saveFileDialog1 =
+                    //     new SaveFileDialog
+                    //     {
+                    //         Filter = @"Bitmap Image|*.bmp|GIF Image|*.Gif|JPeg Image|*.jpg|PNG Image|*.Png",
+                    //         Title = @"Save Signature Image"
+                    //     };
+                    // saveFileDialog1.ShowDialog();
 
-                   if (saveFileDialog1.FilterIndex == 1)
-                   {
-                       myImg.Save(fs, System.Drawing.Imaging.ImageFormat.Bmp);
-                       _imgFile = saveFileDialog1.FileName;
-                   }
-                   else if (saveFileDialog1.FilterIndex == 2)
-                   {
-                       myImg.Save(fs, System.Drawing.Imaging.ImageFormat.Gif);
-                       _imgFile = saveFileDialog1.FileName;
-                   }
-                   else if (saveFileDialog1.FilterIndex == 3)
-                   {
-                       myImg.Save(fs, System.Drawing.Imaging.ImageFormat.Jpeg);
-                       _imgFile = saveFileDialog1.FileName;
-                   }
-                   else if (saveFileDialog1.FilterIndex == 4)
-                   {
-                       myImg.Save(fs, System.Drawing.Imaging.ImageFormat.Png);
-                       _imgFile = saveFileDialog1.FileName;
-                   }
-                   fs.Close();
-               }
+                    //if (saveFileDialog1.FileName != "")
+                    //{
+                    //   var fs = (FileStream)saveFileDialog1.OpenFile();
+
+                    //    if (saveFileDialog1.FilterIndex == 1)
+                    //    {
+                    //        myImg.Save(fs, System.Drawing.Imaging.ImageFormat.Bmp);
+                    //        _imgFile = saveFileDialog1.FileName;
+                    //    }
+                    //    else if (saveFileDialog1.FilterIndex == 2)
+                    //    {
+                    //        myImg.Save(fs, System.Drawing.Imaging.ImageFormat.Gif);
+                    //        _imgFile = saveFileDialog1.FileName;
+                    //    }
+                    //    else if (saveFileDialog1.FilterIndex == 3)
+                    //    {
+                    //        myImg.Save(fs, System.Drawing.Imaging.ImageFormat.Jpeg);
+                    //        _imgFile = saveFileDialog1.FileName;
+                    //    }
+                    //    else if (saveFileDialog1.FilterIndex == 4)
+                    //    {
+                    //        myImg.Save(fs, System.Drawing.Imaging.ImageFormat.Png);
+                    //        _imgFile = saveFileDialog1.FileName;
+                    //    }
+                    //    fs.Close();
+                    //}
+#endregion
                WindowState = FormWindowState.Minimized;
-               Process.Start(_imgFile);
+               Process.Start(Application.StartupPath + "\\test.pdf");
                sigPlusNET1.LCDWriteString(0, 2, 35, 25, f, "Signature capture complete.");
                Thread.Sleep(1000);
                Application.Exit();
@@ -169,5 +280,6 @@ namespace SigPadPrototype
          sigPlusNET1.SetLCDCaptureMode(1);
          sigPlusNET1.SetTabletState(0);
       }
+
    }
 }
